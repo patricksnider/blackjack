@@ -19,7 +19,7 @@ class Deck:
 
     def create(self):
         for x in range(1, self.deckNum+1):
-            for val in range(1, 14):
+            for val in range(2, 15):
                 for suit in ["S", "C", "D", "H"]:
                     self.cards.append(Card(val, suit, x))
 
@@ -38,26 +38,39 @@ class Deck:
         player.cards.append(self.cards.pop())
         player.updateCount()
 
-    def dealInitialCards(self, players):
+    def dealInitialCardsPlayers(self, players):
         for i in range(2):
             for player in players:
                 self.dealCard(player)
 
+    def dealInitialCardsDealer(self, dealer):
+        for i in range(2):
+            self.dealCard(dealer)
     
 class Dealer:
     def __init__(self):
         self.players = []
         self.cards = []
         self.count = [0,0]
+        self.bestCount = 0
+
+    def showHalfCards(self):
+        print("Dealer's Cards:")
+        self.cards[0].show()
+        print("2nd Card: ?\n")
 
     def showCards(self):
         print("Dealers's cards:")
         for card in self.cards:
             card.show()
 
+    def showBestCount(self):
+        print("Dealer's Best Count: {}\n".format(self.bestCount))
+
     def hit(self):
         deck.dealCard(self)
         self.showCards()
+        self.showCount()
 
     def updateCount(self):
         self.count = [0,0]
@@ -72,21 +85,30 @@ class Dealer:
                 self.count[1] = self.count[0]
                 self.count[0] = self.count[0]+1
                 self.count[1] = self.count[1]+11
+        if(self.count[0] == self.count[1]):
+            self.bestCount = self.count[0]
+        elif(self.count[1] > 21):
+            self.bestCount = self.count[0]
+        elif(self.count[1] > self.count[0] and self.count[1] < 22):
+            self.bestCount = self.count[1]
+        else:
+            self.bestCount = self.count[0]
 
     def showCount(self):
         if(self.count[0] == self.count[1]):
-            print("Dealer's Count: {}".format(self.count[0]))
+            print("Dealer's Count: {}\n".format(self.count[0]))
         elif(self.count[0] != self.count[1] and (self.count[0] and self.count[1]) < 22):
-            print("Dealer's Count: {}/{}".format(self.count[0], self.count[1]))
+            print("Dealer's Count: {}/{}\n".format(self.count[0], self.count[1]))
         elif(self.count[0] != self.count[1] and (self.count[0] < 22 and self.count[1] > 21)):
-            print("Dealer's Count: {}".format(self.count[0]))
+            print("Dealer's Count: {}\n".format(self.count[0]))
         elif(self.count[0] != self.count[1] and (self.count[1] < 22 and self.count[0] > 21)):
-            print("Dealer's Count: {}".format(self.count[1]))
+            print("Dealer's Count: {}\n".format(self.count[1]))
 
 class Player:
     def __init__(self, money, name):
         self.cards = []
         self.count = [0,0]
+        self.bestCount = 0
         self.balance = money
         self.name = name
         self.playerBet = 0
@@ -99,17 +121,35 @@ class Player:
     def showBal(self):
         print("{}'s Balance: {}".format(self.name, self.balance))
 
+    def showBestCount(self):
+        print("{}'s Best Count: {}".format(self.name, self.bestCount))
+
+    def promptBet(self):
+        return input("{}, what is your bet?\n".format(self.name))
+
     def bet(self, val):
         bet = val
         if(bet < self.balance):
             self.balance = self.balance - bet
             self.playerBet = bet
         else:
-            print("Not enough money")
+            print("Not enough money\n")
+
+    def successfulBet(self):
+        print("{} wins {}!!".format(self.name, self.playerBet))
+        if(len(self.cards) == 2 and self.count[1] == 21):
+            self.balance = self.balance + (self.playerBet*2.5)
+            self.playerBet = 0
+        else:
+            self.balance = self.balance + (self.playerBet*2)
+            self.playerBet = 0
+    def unsuccessfulBet(self):
+        self.playerBet = 0
 
     def hit(self):
         deck.dealCard(self)
         self.showCards()
+        self.showCount()
         
     def updateCount(self):
         self.count = [0,0]
@@ -124,34 +164,91 @@ class Player:
                 self.count[1] = self.count[0]
                 self.count[0] = self.count[0]+1
                 self.count[1] = self.count[1]+11
+        if(self.count[0] == self.count[1]):
+            self.bestCount = self.count[0]
+        elif(self.count[1] > 21):
+            self.bestCount = self.count[0]
+        elif(self.count[1] > self.count[0] and self.count[1] < 22):
+            self.bestCount = self.count[1]
+        else:
+            self.bestCount = self.count[0]
 
     def showCount(self):
-        if(self.count[0] == self.count[1]):
-            print("{}'s Count: {}".format(self.name, self.count[0]))
+        if(self.count[0] > 21 and self.count[1] > 21):
+            print("{}'s Count: bust\n".format(self.name))
+        elif(self.count[0] == self.count[1]):
+            print("{}'s Count: {}\n".format(self.name, self.count[0]))
         elif(self.count[0] != self.count[1] and (self.count[0] and self.count[1]) < 22):
-            print("{}'s Count: {}/{}".format(self.name, self.count[0], self.count[1]))
+            print("{}'s Count: {}/{}\n".format(self.name, self.count[0], self.count[1]))
         elif(self.count[0] != self.count[1] and (self.count[0] < 22 and self.count[1] > 21)):
-            print("{}'s Count: {}".format(self.name, self.count[0]))
+            print("{}'s Count: {}\n".format(self.name, self.count[0]))
         elif(self.count[0] != self.count[1] and (self.count[1] < 22 and self.count[0] > 21)):
-            print("{}'s Count: {}".format(self.name, self.count[1]))
-deck = Deck(6)
+            print("{}'s Count: {}\n".format(self.name, self.count[1]))
+
+def dealerRound(dealer):
+    while(dealer.bestCount < 17):
+        dealer.hit()
+
+
+def playerRound(player):
+    direction = input("Enter hit to hit or stand to stand\n")
+    if(direction == "hit"):
+        player.hit()
+        if(player.bestCount < 22):
+            playerRound(player)
+        else:
+            print("Bust!\n")
+    elif(direction == "stand"):
+        player.showCards()
+        player.showCount()
+    else:
+        print("Enter a correct direction\n")
+        playerRound(player)
+
+def compareHands(hand1, hand2):
+    if(hand1.bestCount > 21 and hand2.bestCount < 22):
+        return -1
+    elif(hand2.bestCount > 21 and hand1.bestCount < 22):
+        return 1
+    elif(hand1.bestCount > hand2.bestCount):
+        return 1
+    elif(hand1.bestCount < hand2.bestCount):
+        return -1
+    else:
+        return 0
+
+def startRound(deck, players, dealer):
+    for player in players:
+        betAmt = int(player.promptBet())
+        player.bet(betAmt)
+    deck.dealInitialCardsPlayers(players)
+    deck.dealInitialCardsDealer(dealer)
+    dealer.showHalfCards()
+    for player in players:
+        player.showCards()
+        player.showCount()
+
+    for player in players:
+        playerRound(player)
+
+    dealerRound(dealer)
+
+
+    for player in players:
+        results = compareHands(dealer, player)
+        if(results == -1):
+            player.successfulBet()
+        elif(results == 1):
+            print("House Wins!\n")
+        else:
+            print("Push")
+
+    
+
+
+
+deck = Deck(1)
 player1 = Player(100, "Pat")
 dealer = Dealer()
-players = [player1, dealer]
-deck.deckCount()
-player1.showBal()
-player1.bet(10)
-player1.showBal()
-player1.bet(91)
-deck.dealInitialCards(players)
-player1.showCards()
-player1.showCount()
-dealer.showCards()
-dealer.showCount()
-deck.deckCount()
-player1.hit()
-player1.showCount()
-deck.deckCount()
-dealer.hit()
-dealer.showCount()
-deck.deckCount()
+players = [player1]
+startRound(deck, players, dealer)
