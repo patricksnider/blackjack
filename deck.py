@@ -23,6 +23,9 @@ class Deck:
                 for suit in ["S", "C", "D", "H"]:
                     self.cards.append(Card(val, suit, x))
 
+    def destroy(self):
+        self.cards = []
+
     def show(self):
         for card in self.cards:
             card.show()
@@ -67,7 +70,7 @@ class Dealer:
     def showBestCount(self):
         print("Dealer's Best Count: {}\n".format(self.bestCount))
 
-    def hit(self):
+    def hit(self, deck):
         deck.dealCard(self)
         self.showCards()
         self.showCount()
@@ -129,7 +132,7 @@ class Player:
 
     def bet(self, val):
         bet = val
-        if(bet < self.balance):
+        if(bet <= self.balance):
             self.balance = self.balance - bet
             self.playerBet = bet
         else:
@@ -146,7 +149,11 @@ class Player:
     def unsuccessfulBet(self):
         self.playerBet = 0
 
-    def hit(self):
+    def pushBet(self):
+        self.balance = self.balance + self.playerBet
+        self.playerBet = 0
+
+    def hit(self, deck):
         deck.dealCard(self)
         self.showCards()
         self.showCount()
@@ -185,17 +192,17 @@ class Player:
         elif(self.count[0] != self.count[1] and (self.count[1] < 22 and self.count[0] > 21)):
             print("{}'s Count: {}\n".format(self.name, self.count[1]))
 
-def dealerRound(dealer):
+def dealerRound(dealer, deck):
     while(dealer.bestCount < 17):
-        dealer.hit()
+        dealer.hit(deck)
 
 
-def playerRound(player):
+def playerRound(player, deck):
     direction = input("Enter hit to hit or stand to stand\n")
     if(direction == "hit"):
-        player.hit()
+        player.hit(deck)
         if(player.bestCount < 22):
-            playerRound(player)
+            playerRound(player, deck)
         else:
             print("Bust!\n")
     elif(direction == "stand"):
@@ -203,7 +210,7 @@ def playerRound(player):
         player.showCount()
     else:
         print("Enter a correct direction\n")
-        playerRound(player)
+        playerRound(player, deck)
 
 def compareHands(hand1, hand2):
     if(hand1.bestCount > 21 and hand2.bestCount < 22):
@@ -229,9 +236,9 @@ def startRound(deck, players, dealer):
         player.showCount()
 
     for player in players:
-        playerRound(player)
+        playerRound(player, deck)
 
-    dealerRound(dealer)
+    dealerRound(dealer, deck)
 
 
     for player in players:
@@ -239,16 +246,39 @@ def startRound(deck, players, dealer):
         if(results == -1):
             player.successfulBet()
         elif(results == 1):
+            player.unsuccessfulBet()
             print("House Wins!\n")
         else:
+            player.pushBet()
             print("Push")
 
+def resetRound(deck, players, dealer):
+    deck.destroy()
+    deck.create()
+    deck.shuffle(2)
+    for player in players:
+        player.cards = []
+        player.count = [0,0]
+        player.bestCount = 0
+    dealer.cards = []
+    dealer.count = [0,0]
+    dealer.bestCount = 0
+
     
+def startGame():
+    deck = Deck(6)
+    dealer = Dealer()
+    player1 = Player(100, "Pat")
+    players = [player1]
+    mes = "start"
+    while(mes == "start"):
+        mes = input("Enter 'start' to begin next round, 'bal' to check balance\n")
+        if(mes == "bal"):
+            print(player1.balance)
+            mes = "start"
+        elif(mes == "start"):
+            startRound(deck, players, dealer)
+            resetRound(deck, players, dealer)
 
 
-
-deck = Deck(1)
-player1 = Player(100, "Pat")
-dealer = Dealer()
-players = [player1]
-startRound(deck, players, dealer)
+startGame()
